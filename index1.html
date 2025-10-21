@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare Tunnel Proxy Sources</title>
+    <style>
+        :root {
+            --primary: #4a6ee0;
+            --primary-dark: #3a5ac8;
+            --secondary: #f38020;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --info: #17a2b8;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+        }
+        
+        .cf-logo {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+        
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background-color: rgba(74, 110, 224, 0.05);
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: var(--light-gray);
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .proxy-source {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid var(--primary);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .proxy-source:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .source-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .source-type {
+            background: var(--primary);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .source-description {
+            margin-bottom: 1rem;
+            color: var(--gray);
+        }
+        
+        .source-details {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .source-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+        
+        .integration-example {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-top: 2rem;
+            overflow-x: auto;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: #ccc;
+        }
+        
+        .copy-btn {
+            background: #3c3c3c;
+            color: #ccc;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .copy-btn:hover {
+            background: #4a4a4a;
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        
+        .code-keyword {
+            color: #569cd6;
+        }
+        
+        .code-string {
+            color: #ce9178;
+        }
+        
+        .code-comment {
+            color: #6a9955;
+        }
+        
+        .code-function {
+            color: #dcdcaa;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 3rem;
+            color: var(--gray);
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .cf-logo {
+                margin-top: 1rem;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                flex: 1;
+                min-width: 120px;
+                text-align: center;
+            }
+            
+            .source-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .source-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>Cloudflare Tunnel Proxy Sources</h1>
+                    <p class="subtitle">A comprehensive list of proxy sources and integration examples for Cloudflare Tunnel</p>
+                </div>
+                <div class="cf-logo">Cloudflare</div>
+            </div>
+            
+            <div class="nav-tabs">
+                <div class="tab active" data-tab="free">Free Proxies</div>
+                <div class="tab" data-tab="premium">Premium Proxies</div>
+                <div class="tab" data-tab="socks">SOCKS Proxies</div>
+                <div class="tab" data-tab="integration">Integration Guide</div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <div class="tab-content active" id="free">
+            <h2>Free Proxy Sources</h2>
+            <p class="source-description">Free proxy sources that can be used with Cloudflare Tunnel. These are great for testing but may have limitations in reliability and speed.</p>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">FreeProxyList</div>
+                    <span class="source-type">HTTP/HTTPS</span>
+                </div>
+                <p class="source-description">A regularly updated list of free HTTP and HTTPS proxies from around the world.</p>
+                <div class="source-details">
+                    Website: https://freeproxylist.org<br>
+                    Format: IP:PORT<br>
+                    Update Frequency: Daily
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit Website</button>
+                    <button class="btn btn-secondary">Copy API URL</button>
+                </div>
+            </div>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">ProxyScrape</div>
+                    <span class="source-type">HTTP/HTTPS/SOCKS</span>
+                </div>
+                <p class="source-description">Provides free proxy lists with API access and multiple protocol support.</p>
+                <div class="source-details">
+                    Website: https://proxyscrape.com<br>
+                    API: https://api.proxyscrape.com/v2/?request=displayproxies<br>
+                    Protocols: HTTP, SOCKS4, SOCKS5
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit Website</button>
+                    <button class="btn btn-secondary">Copy API URL</button>
+                </div>
+            </div>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">GitHub Proxy Lists</div>
+                    <span class="source-type">HTTP/HTTPS</span>
+                </div>
+                <p class="source-description">Community-maintained proxy lists on GitHub, regularly updated.</p>
+                <div class="source-details">
+                    Your List: https://github.com/AFRcloud/ProxyList<br>
+                    Alternative: https://github.com/TheSpeedX/PROXY-List<br>
+                    Format: IP:PORT:Country
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit GitHub</button>
+                    <button class="btn btn-secondary">Copy Raw URL</button>
+                </div>
+            </div>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">OpenProxySpace</div>
+                    <span class="source-type">HTTP/HTTPS</span>
+                </div>
+                <p class="source-description">Free proxy API with filtering options by country, protocol, and anonymity level.</p>
+                <div class="source-details">
+                    Website: https://openproxyspace.com<br>
+                    API: https://openproxyspace.com/api/http-proxies<br>
+                    Filters: Country, anonymity, last check
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit Website</button>
+                    <button class="btn btn-secondary">Copy API URL</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="premium">
+            <h2>Premium Proxy Services</h2>
+            <p class="source-description">Paid proxy services that offer higher reliability, speed, and dedicated support. Recommended for production use.</p>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">Bright Data</div>
+                    <span class="source-type">Residential/DC</span>
+                </div>
+                <p class="source-description">Enterprise-grade proxy network with residential, datacenter, and mobile IPs.</p>
+                <div class="source-details">
+                    Website: https://brightdata.com<br>
+                    Pricing: Starts at $500/month<br>
+                    Features: 72M+ IPs, 195+ countries
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit Website</button>
+                    <button class="btn btn-secondary">View Documentation</button>
+                </div>
+            </div>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">Oxylabs</div>
+                    <span class="source-type">Residential/DC</span>
+                </div>
+                <p class="source-description">Premium proxy service with extensive geographic coverage and high success rates.</p>
+                <div class="source-details">
+                    Website: https://oxylabs.io<br>
+                    Pricing: Starts at $300/month<br>
+                    Features: 100M+ IPs, custom solutions
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit Website</button>
+                    <button class="btn btn-secondary">View Documentation</button>
+                </div>
+            </div>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">Smartproxy</div>
+                    <span class="source-type">Residential/DC</span>
+                </div>
+                <p class="source-description">Cost-effective proxy solution with good performance and easy integration.</p>
+                <div class="source-details">
+                    Website: https://smartproxy.com<br>
+                    Pricing: Starts at $75/month<br>
+                    Features: 40M+ IPs, 195+ locations
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit Website</button>
+                    <button class="btn btn-secondary">View Documentation</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="socks">
+            <h2>SOCKS Proxy Sources</h2>
+            <p class="source-description">SOCKS proxies that can be used with Cloudflare Tunnel for different protocol support.</p>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">SOCKS Proxy List</div>
+                    <span class="source-type">SOCKS4/SOCKS5</span>
+                </div>
+                <p class="source-description">Dedicated SOCKS proxy lists with support for both SOCKS4 and SOCKS5 protocols.</p>
+                <div class="source-details">
+                    Website: https://socks-proxy.net<br>
+                    Update Frequency: Hourly<br>
+                    Protocols: SOCKS4, SOCKS5
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit Website</button>
+                    <button class="btn btn-secondary">Copy API URL</button>
+                </div>
+            </div>
+            
+            <div class="proxy-source">
+                <div class="source-header">
+                    <div class="source-title">GitHub SOCKS List</div>
+                    <span class="source-type">SOCKS5</span>
+                </div>
+                <p class="source-description">Community-maintained SOCKS5 proxy list with regular updates.</p>
+                <div class="source-details">
+                    URL: https://github.com/hookzof/socks5_list<br>
+                    Raw List: https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt<br>
+                    Format: IP:PORT
+                </div>
+                <div class="source-actions">
+                    <button class="btn btn-primary">Visit GitHub</button>
+                    <button class="btn btn-secondary">Copy Raw URL</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="integration">
+            <h2>Integration with Cloudflare Tunnel</h2>
+            <p class="source-description">Examples of how to integrate these proxy sources with Cloudflare Tunnel for secure access to your applications.</p>
+            
+            <div class="integration-example">
+                <div class="code-header">
+                    <span>Using cloudflared with Proxy Configuration</span>
+                    <button class="copy-btn">Copy Code</button>
+                </div>
+                <pre><code><span class="code-comment"># Example configuration for using proxies with Cloudflare Tunnel</span>
+<span class="code-comment"># In your cloudflared config file (~/.cloudflared/config.yml)</span>
+
+<span class="code-keyword">tunnel</span>: <span class="code-string">"your-tunnel-id"</span>
+<span class="code-keyword">credentials-file</span>: <span class="code-string">"/path/to/credentials.json"</span>
+
+<span class="code-keyword">ingress</span>:
+  - <span class="code-keyword">hostname</span>: <span class="code-string">"app.yourdomain.com"</span>
+    <span class="code-keyword">service</span>: <span class="code-string">"http://localhost:3000"</span>
+    <span class="code-keyword">originRequest</span>:
+      <span class="code-keyword">proxyType</span>: <span class="code-string">"socks"</span>
+      <span class="code-keyword">proxyAddress</span>: <span class="code-string">"127.0.0.1:1080"</span>
+  - <span class="code-keyword">service</span>: <span class="code-string">"http_status:404"</span>
+
+<span class="code-comment"># For HTTP proxies, use:</span>
+<span class="code-comment"># proxyType: "http"</span>
+<span class="code-comment"># proxyAddress: "proxy.example.com:8080"</span></code></pre>
+            </div>
+            
+            <div class="integration-example" style="margin-top: 1.5rem;">
+                <div class="code-header">
+                    <span>Bash Script to Fetch and Rotate Proxies</span>
+                    <button class="copy-btn">Copy Code</button>
+                </div>
+                <pre><code><span class="code-comment">#!/bin/bash</span>
+<span class="code-comment"># Script to fetch proxies and configure cloudflared</span>
+
+<span class="code-function">fetch_proxies</span>() {
+    <span class="code-comment"># Fetch from your GitHub proxy list</span>
+    curl -s https://raw.githubusercontent.com/AFRcloud/ProxyList/main/ProxyList2.txt > proxies.txt
+    
+    <span class="code-comment"># Extract Malaysian proxies (MY) as an example</span>
+    grep <span class="code-string">" MY$"</span> proxies.txt > my_proxies.txt
+    echo <span class="code-string">"Fetched <span class="code-function">$(wc -l < my_proxies.txt)</span> Malaysian proxies"</span>
+}
+
+<span class="code-function">setup_proxy_rotation</span>() {
+    <span class="code-comment"># Simple round-robin proxy rotation</span>
+    while <span class="code-keyword">true</span>; do
+        <span class="code-keyword">for</span> proxy in <span class="code-keyword">$(cat my_proxies.txt)</span>; do
+            ip=<span class="code-keyword">$(echo <span class="code-string">"<span class="code-variable">$proxy</span>"</span> | cut -d: -f1)</span>
+            port=<span class="code-keyword">$(echo <span class="code-string">"<span class="code-variable">$proxy</span>"</span> | cut -d: -f2)</span>
+            
+            <span class="code-comment"># Update cloudflared config with current proxy</span>
+            sed -i <span class="code-string">"s/proxyAddress: \".*\"/proxyAddress: \"<span class="code-variable">$ip</span>:<span class="code-variable">$port</span>\"/"</span> ~/.cloudflared/config.yml
+            
+            <span class="code-comment"># Restart cloudflared to apply changes</span>
+            pkill cloudflared
+            cloudflared tunnel run your-tunnel-id &
+            
+            <span class="code-comment"># Use this proxy for 5 minutes</span>
+            sleep 300
+        done
+    done
+}
+
+<span class="code-comment"># Main execution</span>
+fetch_proxies
+setup_proxy_rotation</code></pre>
+            </div>
+            
+            <div class="integration-example" style="margin-top: 1.5rem;">
+                <div class="code-header">
+                    <span>Docker Compose with Proxy Support</span>
+                    <button class="copy-btn">Copy Code</button>
+                </div>
+                <pre><code><span class="code-comment"># docker-compose.yml</span>
+<span class="code-keyword">version</span>: <span class="code-string">'3.8'</span>
+
+<span class="code-keyword">services</span>:
+  <span class="code-keyword">cloudflared</span>:
+    <span class="code-keyword">image</span>: <span class="code-string">cloudflare/cloudflared:latest</span>
+    <span class="code-keyword">command</span>: <span class="code-string">tunnel run</span>
+    <span class="code-keyword">environment</span>:
+      - <span class="code-string">TUNNEL_URL=http://webapp:8080</span>
+      <span class="code-comment"># Proxy configuration via environment variables</span>
+      - <span class="code-string">HTTP_PROXY=http://proxy-server:8080</span>
+      - <span class="code-string">HTTPS_PROXY=http://proxy-server:8080</span>
+    <span class="code-keyword">volumes</span>:
+      - <span class="code-string">./config:/etc/cloudflared</span>
+    <span class="code-keyword">depends_on</span>:
+      - <span class="code-string">webapp</span>
+      - <span class="code-string">proxy-server</span>
+
+  <span class="code-keyword">webapp</span>:
+    <span class="code-keyword">image</span>: <span class="code-string">your-web-app:latest</span>
+    <span class="code-keyword">ports</span>:
+      - <span class="code-string">"8080:8080"</span>
+
+  <span class="code-keyword">proxy-server</span>:
+    <span class="code-keyword">image</span>: <span class="code-string">squidproxy/squid:latest</span>
+    <span class="code-keyword">ports</span>:
+      - <span class="code-string">"3128:3128"</span>
+    <span class="code-keyword">volumes</span>:
+      - <span class="code-string">./squid.conf:/etc/squid/squid.conf"</span></code></pre>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p>Cloudflare Tunnel Proxy Sources &copy; 2023 | This is a reference guide for educational purposes</p>
+            <p>Always ensure compliance with terms of service for any proxy providers you use</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to current tab and content
+                    tab.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Copy button functionality
+            const copyButtons = document.querySelectorAll('.copy-btn');
+            copyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const codeBlock = this.parentElement.nextElementSibling;
+                    const textToCopy = codeBlock.textContent;
+                    
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const originalText = this.textContent;
+                        this.textContent = 'Copied!';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 2000);
+                    });
+                });
+            });
+            
+            // Button actions
+            const primaryButtons = document.querySelectorAll('.btn-primary');
+            primaryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const sourceTitle = this.closest('.proxy-source').querySelector('.source-title').textContent;
+                    alert(`This would navigate to the ${sourceTitle} website in a real implementation.`);
+                });
+            });
+            
+            const secondaryButtons = document.querySelectorAll('.btn-secondary');
+            secondaryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const sourceDetails = this.closest('.proxy-source').querySelector('.source-details').textContent;
+                    const urlMatch = sourceDetails.match(/https?:\/\/[^\s]+/);
+                    if (urlMatch) {
+                        navigator.clipboard.writeText(urlMatch[0]).then(() => {
+                            alert('URL copied to clipboard!');
+                        });
+                    } else {
+                        alert('No URL found to copy.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
